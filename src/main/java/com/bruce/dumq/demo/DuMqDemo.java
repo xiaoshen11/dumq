@@ -1,9 +1,9 @@
 package com.bruce.dumq.demo;
 
-import com.bruce.dumq.core.DuBroker;
-import com.bruce.dumq.core.DuConsumer;
-import com.bruce.dumq.core.DuMessage;
-import com.bruce.dumq.core.DuProducer;
+import com.bruce.dumq.client.DuBroker;
+import com.bruce.dumq.client.DuConsumer;
+import com.bruce.dumq.model.DuMessage;
+import com.bruce.dumq.client.DuProducer;
 import lombok.SneakyThrows;
 
 /**

@@ -1,4 +1,6 @@
-package com.bruce.dumq.core;
+package com.bruce.dumq.client;
+
+import com.bruce.dumq.model.DuMessage;
 
 /**
  * @date 2024/6/25

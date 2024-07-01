@@ -1,4 +1,4 @@
-package com.bruce.dumq.core;
+package com.bruce.dumq.client;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

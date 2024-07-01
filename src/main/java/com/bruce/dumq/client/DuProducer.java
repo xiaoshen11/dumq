@@ -1,5 +1,6 @@
-package com.bruce.dumq.core;
+package com.bruce.dumq.client;
 
+import com.bruce.dumq.model.DuMessage;
 import lombok.AllArgsConstructor;
 
 /**
