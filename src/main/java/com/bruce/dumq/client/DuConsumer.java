@@ -1,6 +1,7 @@
 package com.bruce.dumq.client;
 
 import com.bruce.dumq.model.DuMessage;
+import lombok.Getter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -12,8 +13,6 @@ public class DuConsumer<T> {
 
     private String id;
     DuBroker broker;
-    String topic;
-    DuMq mq;
 
     static AtomicInteger idgen = new AtomicInteger(0);
 
@@ -22,20 +21,36 @@ public class DuConsumer<T> {
         this.id = "CID" + idgen.getAndIncrement();
     }
 
-    public void subscribe(String topic){
-        this.topic = topic;
-        mq = broker.find(topic);
-        if(mq == null){
-            throw new RuntimeException("topic not found");
+    public void sub(String topic){
+        broker.sub(topic, id);
+    }
+
+    public void unsub(String topic){
+        broker.unsub(topic, id);
+    }
+
+    public boolean ack(String topic,Integer offset){
+        return broker.ack(topic, id, offset);
+    }
+
+    public boolean ack(String topic, DuMessage message) {
+        Object o = message.getHeaders().get("x-offset");
+        if(o == null){
+            return false;
         }
+        int offset = Integer.parseInt((String) o);
+        return ack(topic,  offset);
     }
 
-    public DuMessage<T> poll(long timeout){
-        return mq.poll(timeout);
+    public DuMessage<T> recv(String topic){
+        return broker.recv(topic, id);
     }
 
-    public void listen(DuListener<T> listener){
-        mq.addListener(listener);
+    public void listen(String topic, DuListener<T> listener){
+        this.listener = listener;
+        broker.addConsumer(topic, this);
     }
 
+    @Getter
+    private DuListener listener;
 }

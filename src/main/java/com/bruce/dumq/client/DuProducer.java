@@ -13,11 +13,7 @@ public class DuProducer {
     DuBroker broker;
 
     public boolean send(String topic, DuMessage message){
-        DuMq mq = broker.find(topic);
-        if(mq == null){
-            throw new RuntimeException("topic not found");
-        }
-        return mq.send(message);
+        return broker.send(topic, message);
     }
 
 }

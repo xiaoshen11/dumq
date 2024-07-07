@@ -1,5 +1,6 @@
 package com.bruce.dumq.demo;
 
+import com.alibaba.fastjson.JSON;
 import com.bruce.dumq.client.DuBroker;
 import com.bruce.dumq.client.DuConsumer;
 import com.bruce.dumq.model.DuMessage;
@@ -16,26 +17,30 @@ public class DuMqDemo {
 
         long ids = 0;
 
-        String topic = "du.order";
-        DuBroker broker = new DuBroker();
-        broker.createTopic(topic);
+        String topic = "com.bruce.test";
+        DuBroker broker = DuBroker.getDefault();
+//        broker.createTopic(topic);
 
         DuProducer producer = broker.createProduce();
         DuConsumer<?> consumer = broker.createConsumer(topic);
-        consumer.subscribe(topic);
-        consumer.listen(message -> {
+//        consumer.sub(topic);
+        consumer.listen(topic, message -> {
             System.out.println(" onMessage => " + message);
         });
 
-        for (int i = 0; i < 10; i++) {
-            Order order = new Order(ids, "item" + ids, 100*ids);
-             producer.send(topic,new DuMessage<>(ids++, order,null));
-        }
+//        DuConsumer<?> consumer1 = broker.createConsumer(topic);
+//        consumer1.sub(topic);
 
         for (int i = 0; i < 10; i++) {
-            DuMessage<Order> message = (DuMessage<Order>)consumer.poll(1000);
-            System.out.println(message);
+            Order order = new Order(ids, "item" + ids, 100*ids);
+            producer.send(topic,new DuMessage<>(ids++, JSON.toJSONString(order),null));
         }
+
+//        for (int i = 0; i < 10; i++) {
+//            DuMessage<String> message = (DuMessage<String>)consumer1.recv(topic);
+//            System.out.println(message);
+//            consumer1.ack(topic,message);
+//        }
 
         while (true){
             char c = (char)System.in.read();
@@ -44,19 +49,20 @@ public class DuMqDemo {
             }
             if(c == 'p'){
                 Order order = new Order(ids, "item" + ids, 100*ids);
-                producer.send(topic,new DuMessage<>((long)ids++, order,null));
-                System.out.println("send ok => " + order);
+                producer.send(topic,new DuMessage<>((long)ids++, JSON.toJSONString(order),null));
+                System.out.println("produce ok => " + order);
             }
             if(c == 'c'){
-                DuMessage<Order> message = (DuMessage<Order>)consumer.poll(1000);
-                System.out.println("poll ok => " + message);
+//                DuMessage<String> message = (DuMessage<String>)consumer1.recv(topic);
+//                System.out.println("consume ok => " + message);
+//                consumer1.ack(topic,message);
             }
             if(c == 'a'){
                 for (int i = 0; i < 10; i++) {
                     Order order = new Order(ids, "item" + ids, 100*ids);
-                    producer.send(topic,new DuMessage<>(ids++, order,null));
+                    producer.send(topic,new DuMessage<>(ids++, JSON.toJSONString(order),null));
                 }
-                System.out.println("send 10 orders...");
+                System.out.println("produce 10 orders...");
             }
         }
 

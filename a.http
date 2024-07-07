@@ -1,0 +1,17 @@
+### sub
+GET http://localhost:8765/dumq/sub?t=a&cid=du
+
+### send
+POST http://localhost:8765/dumq/send?t=a
+Content-Type: application/json
+
+{
+  "body": "{\"id\":3,\"item\":\"item3\",\"price\":300.0}"
+}
+
+### recv
+GET http://localhost:8765/dumq/recv?t=a&cid=du
+
+### ack
+GET http://localhost:8765/dumq/ack?t=a&cid=du&offset=0
+

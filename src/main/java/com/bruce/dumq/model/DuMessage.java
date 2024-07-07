@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -20,7 +21,7 @@ public class DuMessage<T> {
     //private String topic;
     private Long id;
     private T body;
-    private Map<String, String> headers;
+    private Map<String, String> headers = new HashMap<>();
 //    private Map<String, String> properties;
 
     public static long getId(){
