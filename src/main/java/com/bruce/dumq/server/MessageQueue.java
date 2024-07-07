@@ -1,6 +1,8 @@
 package com.bruce.dumq.server;
 
 import com.bruce.dumq.model.DuMessage;
+import com.bruce.dumq.store.Indexer;
+import com.bruce.dumq.store.Store;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,27 +24,24 @@ public class MessageQueue {
     private Map<String, MessageSubscription> subscriptions = new HashMap<>();
 
     private String topic;
-    private DuMessage<?>[] queue = new DuMessage[1024*10];
-    private int index;
+//    private DuMessage<?>[] queue = new DuMessage[1024*10];
+    private Store store = null;
+//    private int index;
 
     public MessageQueue(String topic) {
         this.topic = topic;
+        store = new Store(topic);
+        store.init();
     }
 
     public int send(DuMessage<?> message){
-        if(index >= queue.length){
-            return -1;
-        }
-        message.getHeaders().put("x-offset",String.valueOf(index));
-        queue[index++] = message;
-        return index;
+        message.getHeaders().put("x-offset",String.valueOf(store.pos()));
+        int offset = store.write((DuMessage<String>) message);
+        return offset;
     }
 
-    public DuMessage<?> recv(int ind){
-        if(ind < index){
-            return queue[ind];
-        }
-        return null;
+    public DuMessage<?> recv(int offset){
+        return store.read(offset);
     }
 
     public void subscribe(MessageSubscription subscription){
@@ -82,13 +81,13 @@ public class MessageQueue {
         return messageQueue.send(message);
     }
 
-    public static DuMessage<?> recv(String topic, String consumerId, int ind){
+    public static DuMessage<?> recv(String topic, String consumerId, int offset){
         MessageQueue messageQueue = queues.get(topic);
         if(messageQueue == null){
             throw new RuntimeException("topic not found");
         }
         if(messageQueue.subscriptions.containsKey(consumerId)){
-            DuMessage<?> recv = messageQueue.recv(ind);
+            DuMessage<?> recv = messageQueue.recv(offset);
             System.out.println(" ====>> recv topic/cip = " + topic +"/" + consumerId);
             System.out.println(" ====>> recv message = " + recv);
             return recv;
@@ -103,8 +102,13 @@ public class MessageQueue {
             throw new RuntimeException("topic not found");
         }
         if(messageQueue.subscriptions.containsKey(consumerId)){
-            int ind = messageQueue.subscriptions.get(consumerId).getOffset();
-            DuMessage<?> recv = messageQueue.recv(ind + 1);
+            int offset = messageQueue.subscriptions.get(consumerId).getOffset();
+            int next_offset = 0;
+            if(offset > -1){
+                Indexer.Entry entry = Indexer.getEntry(topic, offset);
+                next_offset = offset + entry.getLength();
+            }
+            DuMessage<?> recv = messageQueue.recv(next_offset);
             System.out.println(" ====>> recv topic/cip = " + topic +"/" + consumerId);
             System.out.println(" ====>> recv message = " + recv);
             return recv;
@@ -118,10 +122,14 @@ public class MessageQueue {
             throw new RuntimeException("topic not found");
         }
         if(messageQueue.subscriptions.containsKey(consumerId)){
-            int ind = messageQueue.subscriptions.get(consumerId).getOffset();
-            int offset = ind = 1;
+            int offset = messageQueue.subscriptions.get(consumerId).getOffset();
+            int next_offset = 0;
+            if(offset > -1){
+                Indexer.Entry entry = Indexer.getEntry(topic, offset);
+                next_offset = offset + entry.getLength();
+            }
+            DuMessage<?> recv = messageQueue.recv(next_offset);
             List<DuMessage<?>> result = new ArrayList<>();
-            DuMessage<?> recv = messageQueue.recv(offset);
             while(recv != null && recv.getBody() != null){
                 result.add(recv);
                 if(result.size() >= size){
@@ -144,7 +152,7 @@ public class MessageQueue {
         }
         if(messageQueue.subscriptions.containsKey(consumerId)){
             MessageSubscription subscription = messageQueue.subscriptions.get(consumerId);
-            if(offset >= subscription.getOffset() && offset <= messageQueue.index){
+            if(offset >= subscription.getOffset() && offset < Store.LEN){
                 System.out.println(" =====>> ack: topic/cip/offset = " + topic +"/" + consumerId + "/" + offset);
                 subscription.setOffset(offset);
                 return offset;

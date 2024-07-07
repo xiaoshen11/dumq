@@ -24,11 +24,11 @@ public class DuMessage<T> {
     private Map<String, String> headers = new HashMap<>();
 //    private Map<String, String> properties;
 
-    public static long getId(){
+    public static long nextId(){
         return idgen.getAndIncrement();
     }
 
-    public static DuMessage<String> create(String msg){
-        return new DuMessage(getId(), msg, null);
+    public static DuMessage<String> create(String msg, Map<String, String> headers){
+        return new DuMessage(nextId(), msg, headers);
     }
 }

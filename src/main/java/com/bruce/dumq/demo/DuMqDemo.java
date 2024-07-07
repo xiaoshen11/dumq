@@ -24,11 +24,11 @@ public class DuMqDemo {
         DuProducer producer = broker.createProduce();
         DuConsumer<?> consumer = broker.createConsumer(topic);
 //        consumer.sub(topic);
-        consumer.listen(topic, message -> {
-            System.out.println(" onMessage => " + message);
-        });
+//        consumer.listen(topic, message -> {
+//            System.out.println(" onMessage => " + message);
+//        });
 
-//        DuConsumer<?> consumer1 = broker.createConsumer(topic);
+        DuConsumer<?> consumer1 = broker.createConsumer(topic);
 //        consumer1.sub(topic);
 
         for (int i = 0; i < 10; i++) {
@@ -36,11 +36,11 @@ public class DuMqDemo {
             producer.send(topic,new DuMessage<>(ids++, JSON.toJSONString(order),null));
         }
 
-//        for (int i = 0; i < 10; i++) {
-//            DuMessage<String> message = (DuMessage<String>)consumer1.recv(topic);
-//            System.out.println(message);
-//            consumer1.ack(topic,message);
-//        }
+        for (int i = 0; i < 10; i++) {
+            DuMessage<String> message = (DuMessage<String>)consumer1.recv(topic);
+            System.out.println(message);
+            consumer1.ack(topic,message);
+        }
 
         while (true){
             char c = (char)System.in.read();

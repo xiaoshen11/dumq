@@ -24,7 +24,7 @@ public class Result<T> {
     }
 
     public static Result<DuMessage<?>> msg(String msg) {
-        return new Result(1,DuMessage.create(msg));
+        return new Result(1,DuMessage.create(msg,null));
     }
 
     public static Result<DuMessage<?>> msg(DuMessage<?> msg) {
