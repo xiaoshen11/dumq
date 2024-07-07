@@ -25,7 +25,7 @@ public class Store {
 
     private String topic;
 
-    public static final int LEN = 1024 * 1024;
+    public static final int LEN = 1024 * 1024 * 10;
 
     public Store(String topic) {
         this.topic = topic;
@@ -45,6 +45,24 @@ public class Store {
         mappedByteBuffer = channel.map(FileChannel.MapMode.READ_WRITE,0,LEN);
 
         // 判断是否有数据，找到数据的结尾
+        ByteBuffer byteBuffer = mappedByteBuffer.asReadOnlyBuffer();
+        byte[] header = new byte[10];
+        byteBuffer.get(header);
+        int pos = 0;
+        while (header[9] > 0){
+            String json = new String(header, StandardCharsets.UTF_8).trim();
+            int len = Integer.parseInt(json) + 10;
+            Indexer.addEntry(topic,pos,len);
+            pos += len;
+            System.out.println(" next= " +pos);
+            byteBuffer.position(pos);
+            byteBuffer.get(header);
+        }
+        byteBuffer = null;
+        System.out.println("init pos = " + pos);
+        mappedByteBuffer.position(pos);
+
+        // 大于10m，分成多个文件
     }
 
     public int pos(){
@@ -55,9 +73,11 @@ public class Store {
         int position = mappedByteBuffer.position();
         System.out.println(" write pos -> " + position);
         String msg = JSON.toJSONString(dm);
-        int length = msg.getBytes(StandardCharsets.UTF_8).length;
-
-        Indexer.addEntry(topic, position, length);
+        int len = msg.getBytes(StandardCharsets.UTF_8).length;
+        String format = String.format("%010d", len);
+        msg = format + msg;
+        len = len +10;
+        Indexer.addEntry(topic, position, len);
         mappedByteBuffer.put(Charset.forName("UTF-8").encode(msg));
         return position;
     }
@@ -66,8 +86,8 @@ public class Store {
         ByteBuffer readOnlyBuffer = mappedByteBuffer.asReadOnlyBuffer();
         System.out.println(" offset = " + offset);
         Indexer.Entry entry = Indexer.getEntry(topic, offset);
-        readOnlyBuffer.position(entry.getOffset());
-        int len = entry.getLength();
+        readOnlyBuffer.position(entry.getOffset() + 10);
+        int len = entry.getLength() - 10;
         byte[] bytes = new byte[len];
         readOnlyBuffer.get(bytes,0,len);
         String json = new String(bytes, StandardCharsets.UTF_8);
